@@ -134,3 +134,4 @@ $env:VNPAY_RETURN_URL="http://10.0.2.2:8081/api/payments/vnpay/return"
 ```
 
 Dung dien thoai that hoac IPN public thi expose backend bang ngrok/Cloudflare Tunnel va doi `VNPAY_RETURN_URL` sang URL public.
+# BusBooking-Web
