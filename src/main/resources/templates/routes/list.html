@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: shell(~{::section})}">
+  <section>
+    <p><a class="btn" th:href="@{/routes/new}">Thêm tuyến</a></p>
+    <p class="error" th:if="${loadError}" th:text="${loadError}">Không tải được dữ liệu tuyến</p>
+    <div class="table-card">
+      <table>
+        <thead>
+        <tr>
+          <th>Mã</th>
+          <th>Điểm đi</th>
+          <th>Điểm đến</th>
+          <th>Loại ghế</th>
+          <th>Khoảng cách</th>
+          <th>Giá gợi ý</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="route : ${routes}">
+          <td th:text="${route.id}">1</td>
+          <td th:text="${route.origin}">Điểm đi</td>
+          <td th:text="${route.destination}">Điểm đến</td>
+          <td th:text="${route.seatCount + ' ghế'}">34 ghế</td>
+          <td th:text="${route.distance + ' km'}">0 km</td>
+          <td th:text="${route.suggestedPrice == null ? '-' : @timeLabels.money(route.suggestedPrice)}">0</td>
+          <td th:text="${@statusLabels.active(route.isActive)}">Đang hoạt động</td>
+          <td class="actions">
+            <span class="muted-text" th:if="${demoMode}">Dữ liệu mẫu</span>
+            <a class="btn muted" th:unless="${demoMode}" th:href="@{/routes/{id}/edit(id=${route.documentId})}">Sửa</a>
+            <form th:if="${!demoMode and route.isActive}" th:action="@{/routes/{id}/active/false(id=${route.documentId})}" method="post">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <button class="btn warning" type="submit">Ngừng hoạt động</button>
+            </form>
+            <form th:if="${!demoMode and !route.isActive}" th:action="@{/routes/{id}/active/true(id=${route.documentId})}" method="post">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <button class="btn secondary" type="submit">Kích hoạt</button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+</body>
+</html>

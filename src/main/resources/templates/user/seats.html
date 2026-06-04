@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{user/fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{user/fragments/layout :: shell(~{::section})}">
+  <section>
+    <div class="page-head">
+      <p class="eyebrow" th:text="${trip.routeLabel()}">Đà Nẵng -> Hà Nội</p>
+      <h1>Chọn ghế</h1>
+      <p class="muted" th:text="${trip.licensePlate + ' · ' + trip.totalSeats + ' ghế'}">43A-12345 · 34 ghế</p>
+    </div>
+
+    <form th:action="@{/user/trips/{id}/seats/book(id=${trip.id})}" method="post" class="seat-page" th:attr="data-price=${trip.price}">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div class="seat-legend">
+        <span><i class="legend free"></i>Ghế trống</span>
+        <span><i class="legend booked"></i>Đã bán</span>
+        <span><i class="legend selected"></i>Đang chọn</span>
+      </div>
+
+      <div class="floor-layout">
+        <div class="floor-panel" th:each="floor : ${#numbers.sequence(1, 2)}">
+          <h2 th:text="${'Tầng ' + floor}">Tầng 1</h2>
+          <div class="seat-grid">
+            <label th:each="seat : ${seats}" th:if="${seat.floor == floor}"
+                   th:class="${seat.booked ? 'seat-card booked' : 'seat-card'}"
+                   th:style="|grid-column:${seat.columnIndex + 1};grid-row:${seat.rowIndex + 1}|">
+              <input th:unless="${seat.booked}" type="checkbox" name="seatIds" th:value="${seat.id}" th:attr="data-seat=${seat.seatNumber}">
+              <span class="seat-box">
+                <span class="seat-icon"></span>
+                <small th:text="${seat.seatNumber}">A01</small>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="booking-bar">
+        <div>
+          <span id="seatCount">0 ghế</span>
+          <strong id="seatTotal">0 đ</strong>
+        </div>
+        <button id="bookButton" class="btn" type="submit" disabled>Xác nhận ghế</button>
+      </div>
+    </form>
+  <script>
+    const form = document.querySelector('.seat-page');
+    const price = Number(form?.dataset.price || 0);
+    const countEl = document.getElementById('seatCount');
+    const totalEl = document.getElementById('seatTotal');
+    const bookButton = document.getElementById('bookButton');
+    const money = new Intl.NumberFormat('vi-VN').format;
+    function refreshSeats() {
+      const selected = document.querySelectorAll('input[name="seatIds"]:checked').length;
+      countEl.textContent = selected + ' ghế';
+      totalEl.textContent = money(price * selected) + ' đ';
+      bookButton.disabled = selected === 0;
+    }
+    document.querySelectorAll('input[name="seatIds"]').forEach(input => input.addEventListener('change', refreshSeats));
+    refreshSeats();
+  </script>
+  </section>
+</div>
+</body>
+</html>

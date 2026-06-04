@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{user/fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{user/fragments/layout :: shell(~{::section})}">
+  <section>
+    <div class="payment-layout">
+      <div>
+        <p class="eyebrow">Thanh toán VNPAY</p>
+        <h1 th:text="${'Đơn ' + payment.id}">Đơn PAY-001</h1>
+        <p class="muted">Quét mã QR hoặc mở liên kết thanh toán. Vé sẽ có QR lên xe sau khi thanh toán thành công.</p>
+        <div class="info-grid payment-info">
+          <div>
+            <span>Số tiền</span>
+            <strong th:text="${@userLabels.money(payment.amount)}">250.000 đ</strong>
+          </div>
+          <div>
+            <span>Trạng thái</span>
+            <strong th:text="${@userLabels.status(payment.status)}">Đang chờ</strong>
+          </div>
+          <div>
+            <span>Nhà cung cấp</span>
+            <strong th:text="${payment.provider}">VNPAY</strong>
+          </div>
+          <div>
+            <span>Hết hạn</span>
+            <strong th:text="${@userLabels.dateTime(payment.expiresAt)}">01/06/26 07:00</strong>
+          </div>
+        </div>
+        <div class="button-row">
+          <a class="btn" th:if="${payment.paymentUrl != null and !#strings.isEmpty(payment.paymentUrl)}" th:href="${payment.paymentUrl}" target="_blank" rel="noopener">Mở VNPAY</a>
+          <a class="btn muted" th:href="@{/user/tickets}">Vé của tôi</a>
+          <form th:if="${payment.cancellable()}" th:action="@{/user/payments/{id}/cancel(id=${payment.id})}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button class="btn danger" type="submit">Hủy thanh toán</button>
+          </form>
+        </div>
+      </div>
+      <div class="qr-panel">
+        <img th:if="${payment.qrImageBase64 != null and !#strings.isEmpty(payment.qrImageBase64)}"
+             th:src="${'data:' + payment.qrMimeType + ';base64,' + payment.qrImageBase64}"
+             alt="QR thanh toán VNPAY">
+        <p th:unless="${payment.qrImageBase64 != null and !#strings.isEmpty(payment.qrImageBase64)}">Chưa tạo được mã QR thanh toán.</p>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2>Vé trong đơn</h2>
+    </div>
+    <div class="ticket-list">
+      <a class="ticket-row" th:each="ticket : ${payment.tickets}" th:href="@{/user/tickets/{id}(id=${ticket.id})}">
+        <div>
+          <strong th:text="${ticket.trip.routeLabel()}">Đà Nẵng -> Hà Nội</strong>
+          <span th:text="${'Ghế ' + ticket.seat.seatNumber + ' · ' + @userLabels.dateTime(ticket.trip.departureTime)}">Ghế A01</span>
+        </div>
+        <em th:text="${@userLabels.status(ticket.status)}">Chờ thanh toán</em>
+      </a>
+    </div>
+    <script th:inline="javascript">
+      (() => {
+        const statusUrl = /*[[@{/user/payments/{id}/status(id=${payment.id})}]]*/ '';
+        const initialStatus = (/*[[${payment.status}]]*/ '').toString().toUpperCase();
+        const terminalStatuses = new Set(['SUCCESS', 'FAILED', 'CANCELLED', 'EXPIRED']);
+        if (!statusUrl || terminalStatuses.has(initialStatus)) return;
+
+        let attempts = 0;
+        const timer = window.setInterval(async () => {
+          attempts += 1;
+          try {
+            const response = await fetch(statusUrl, { cache: 'no-store' });
+            if (!response.ok) return;
+            const data = await response.json();
+            const status = (data.status || '').toString().toUpperCase();
+            if (data.paid === true || terminalStatuses.has(status)) {
+              window.clearInterval(timer);
+              window.location.reload();
+            }
+          } catch (error) {
+            // Keep polling; transient network errors are expected while returning from VNPAY.
+          }
+          if (attempts >= 120) {
+            window.clearInterval(timer);
+          }
+        }, 3000);
+      })();
+    </script>
+  </section>
+</div>
+</body>
+</html>

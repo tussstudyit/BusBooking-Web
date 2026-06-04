@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: shell(~{::section})}">
+  <section>
+    <div class="trip-edit-layout">
+      <div class="card form trip-form-card">
+        <div class="form-heading">
+          <div>
+            <h2 th:text="${mode == 'edit'} ? 'Sửa chuyến xe' : 'Thêm chuyến xe'">Sửa chuyến xe</h2>
+            <p class="muted-text" th:if="${mode == 'edit' and trip != null}" th:text="${trip.routeLabel + ' | ' + trip.busLicensePlate}">Tuyến | Xe</p>
+          </div>
+          <a class="btn muted" th:href="@{/trips}">Quay lại</a>
+        </div>
+
+        <p class="error" th:if="${saveError}" th:text="${saveError}">Không lưu được chuyến</p>
+
+        <form th:object="${tripForm}" th:action="${mode == 'edit'} ? @{/trips/{id}(id=${documentId})} : @{/trips}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+          <div class="field">
+            <label>Tuyến</label>
+            <select id="routeId" th:field="*{routeId}" required>
+              <option value="">Chọn tuyến</option>
+              <option th:each="route : ${routes}"
+                      th:value="${route.id}"
+                      th:attr="data-price=${route.suggestedPrice},data-duration=${route.durationMs},data-seat=${route.seatCount},data-origin=${route.originId},data-destination=${route.destinationId}"
+                      th:text="${route.origin + ' -> ' + route.destination + ' | ' + route.seatCount + ' ghế' + (route.suggestedPrice == null ? '' : ' | ' + @timeLabels.money(route.suggestedPrice))}"></option>
+            </select>
+            <p class="field-help">Chọn tuyến trước để hệ thống chỉ hiện xe đúng tỉnh đầu/cuối tuyến và đúng loại ghế.</p>
+          </div>
+
+          <div class="field">
+            <label>Xe</label>
+            <select id="busId" th:field="*{busId}" required>
+              <option value="">Chọn xe</option>
+              <option th:each="bus : ${buses}"
+                      th:value="${bus.id}"
+                      th:attr="data-seats=${bus.totalSeats},data-province=${bus.serviceProvinceId}"
+                      th:text="${bus.busName + ' - ' + bus.licensePlate + ' | ' + bus.totalSeats + ' ghế'}"></option>
+            </select>
+            <p class="field-help">Xe phải thuộc điểm đi hoặc điểm đến của tuyến.</p>
+          </div>
+
+          <div class="field">
+            <label>Nhân viên phụ trách</label>
+            <select th:field="*{staffId}">
+              <option value="">Chưa gán nhân viên</option>
+              <option th:each="staff : ${staffOptions}" th:value="${staff.id}" th:text="${staff.label()}"></option>
+            </select>
+            <p class="field-help">Danh sách chỉ gồm nhân viên đang hoạt động và chưa bị trùng giờ với chuyến khác.</p>
+          </div>
+
+          <input type="hidden" th:field="*{tripDate}">
+          <input type="hidden" th:field="*{departureTime}">
+          <input type="hidden" th:field="*{arrivalTime}">
+
+          <div class="form-two-columns">
+            <div class="field">
+              <label>Ngày giờ khởi hành</label>
+              <input id="departureDisplay" type="text" inputmode="numeric" placeholder="dd/MM/yy HH:mm" required>
+            </div>
+            <div class="field">
+              <label>Giá vé</label>
+              <input type="number" min="1000" step="1000" th:field="*{price}" required>
+            </div>
+          </div>
+
+          <p id="arrivalPreview" class="muted-text trip-time-preview"></p>
+
+          <div class="field">
+            <label>Trạng thái</label>
+            <select th:field="*{status}">
+              <option value="SCHEDULED">Chưa khởi hành</option>
+              <option value="DEPARTED">Đã khởi hành</option>
+              <option value="RUNNING">Đang chạy</option>
+              <option value="COMPLETED">Hoàn thành</option>
+              <option value="CANCELLED">Đã hủy</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Lưu chuyến</button>
+            <a class="btn muted" th:href="@{/trips}">Hủy</a>
+          </div>
+        </form>
+      </div>
+
+      <div class="card trip-seat-panel" th:if="${mode == 'edit'}">
+        <div class="seat-panel-header">
+          <div>
+            <h2>Giao diện ghế</h2>
+            <p class="muted-text" th:text="${trip.routeLabel + ' | ' + trip.busLicensePlate}">Tuyến | xe</p>
+          </div>
+          <div class="seat-legend">
+            <span><i class="seat-dot available"></i>Còn trống</span>
+            <span><i class="seat-dot booked"></i>Đã đặt</span>
+          </div>
+        </div>
+
+        <div class="seat-floors">
+          <div class="seat-floor">
+            <h3>Tầng 1</h3>
+            <div class="seat-grid">
+              <th:block th:each="seat : ${seatViews}" th:if="${seat.floor == 1}">
+                <div th:class="'admin-seat ' + ${seat.cssClass()}" th:style="'grid-column: ' + ${seat.gridColumn()}" th:title="${@statusLabels.label(seat.status)}">
+                  <span class="seat-icon"></span>
+                  <strong th:text="${seat.seatNumber}">A01</strong>
+                </div>
+              </th:block>
+            </div>
+          </div>
+          <div class="seat-floor">
+            <h3>Tầng 2</h3>
+            <div class="seat-grid">
+              <th:block th:each="seat : ${seatViews}" th:if="${seat.floor == 2}">
+                <div th:class="'admin-seat ' + ${seat.cssClass()}" th:style="'grid-column: ' + ${seat.gridColumn()}" th:title="${@statusLabels.label(seat.status)}">
+                  <span class="seat-icon"></span>
+                  <strong th:text="${seat.seatNumber}">B01</strong>
+                </div>
+              </th:block>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+  const routeSelect = document.getElementById('routeId');
+  const busSelect = document.getElementById('busId');
+  const tripForm = document.querySelector('form[method="post"]');
+  const departureDisplay = document.getElementById('departureDisplay');
+  const tripDate = document.getElementById('tripDate');
+  const departureTime = document.getElementById('departureTime');
+  const arrivalTime = document.getElementById('arrivalTime');
+  const price = document.getElementById('price');
+  const arrivalPreview = document.getElementById('arrivalPreview');
+
+  function pad(value) {
+    return String(value).padStart(2, '0');
+  }
+
+  function formatDisplayDateTime(ms) {
+    const date = new Date(Number(ms));
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${String(date.getFullYear()).slice(-2)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  function parseDisplayDateTime(value) {
+    const match = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})\s+(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
+    if (!match) {
+      return null;
+    }
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const rawYear = Number(match[3]);
+    const year = match[3].length === 2 ? 2000 + rawYear : rawYear;
+    const hour = Number(match[4]);
+    const minute = Number(match[5]);
+    const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day ||
+      date.getHours() !== hour ||
+      date.getMinutes() !== minute
+    ) {
+      return null;
+    }
+    return date.getTime();
+  }
+
+  function selectedRouteOption() {
+    return routeSelect.options[routeSelect.selectedIndex];
+  }
+
+  function normalizeMoneyValue(value) {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) {
+      return value;
+    }
+    return String(Math.round(numericValue));
+  }
+
+  function busCanServeRoute(busOption, routeOption) {
+    if (!busOption || busOption.value === '') {
+      return true;
+    }
+    if (!routeOption || routeOption.value === '') {
+      return true;
+    }
+    const sameSeatType = busOption.dataset.seats === routeOption.dataset.seat;
+    const busProvince = busOption.dataset.province || '';
+    const sameRouteArea = busProvince &&
+      (busProvince === routeOption.dataset.origin || busProvince === routeOption.dataset.destination);
+    return sameSeatType && sameRouteArea;
+  }
+
+  function routeCanUseBus(routeOption, busOption) {
+    if (!routeOption || routeOption.value === '') {
+      return true;
+    }
+    if (!busOption || busOption.value === '') {
+      return true;
+    }
+    return busCanServeRoute(busOption, routeOption);
+  }
+
+  function filterBusesByRoute() {
+    const routeOption = selectedRouteOption();
+    let selectedOptionStillVisible = !busSelect.value;
+    Array.from(busSelect.options).forEach((option, index) => {
+      if (index === 0) {
+        option.hidden = false;
+        option.disabled = false;
+        return;
+      }
+      const visible = busCanServeRoute(option, routeOption);
+      option.hidden = !visible;
+      option.disabled = !visible;
+      if (option.selected && visible) {
+        selectedOptionStillVisible = true;
+      }
+    });
+    if (!selectedOptionStillVisible) {
+      busSelect.value = '';
+    }
+  }
+
+  function filterRoutesByBus() {
+    const busOption = busSelect.options[busSelect.selectedIndex];
+    let selectedOptionStillVisible = !routeSelect.value;
+    Array.from(routeSelect.options).forEach((option, index) => {
+      if (index === 0) {
+        option.hidden = false;
+        option.disabled = false;
+        return;
+      }
+      const visible = routeCanUseBus(option, busOption);
+      option.hidden = !visible;
+      option.disabled = !visible;
+      if (option.selected && visible) {
+        selectedOptionStillVisible = true;
+      }
+    });
+    if (!selectedOptionStillVisible) {
+      routeSelect.value = '';
+      price.value = '';
+      arrivalPreview.textContent = '';
+    }
+  }
+
+  function syncTripFields(allowPriceOverwrite = false) {
+    const option = selectedRouteOption();
+    if (option && option.dataset.price && (allowPriceOverwrite || !price.value)) {
+      price.value = normalizeMoneyValue(option.dataset.price);
+    }
+    if (!departureDisplay.value) {
+      return;
+    }
+    const departMs = parseDisplayDateTime(departureDisplay.value);
+    if (departMs == null) {
+      departureDisplay.setCustomValidity('Nhap ngay gio theo dinh dang dd/MM/yy HH:mm');
+      arrivalPreview.textContent = '';
+      return;
+    }
+    departureDisplay.setCustomValidity('');
+    const day = new Date(departMs);
+    day.setHours(0, 0, 0, 0);
+    const durationMs = option && option.dataset.duration ? Number(option.dataset.duration) : 4 * 3600 * 1000;
+    tripDate.value = day.getTime();
+    departureTime.value = departMs;
+    arrivalTime.value = departMs + durationMs;
+    arrivalPreview.textContent = 'Du kien den: ' + formatDisplayDateTime(arrivalTime.value);
+  }
+
+  if (departureTime.value) {
+    departureDisplay.value = formatDisplayDateTime(departureTime.value);
+  } else {
+    const nextHour = new Date();
+    nextHour.setDate(nextHour.getDate() + 1);
+    nextHour.setHours(8, 0, 0, 0);
+    departureDisplay.value = formatDisplayDateTime(nextHour.getTime());
+  }
+
+  routeSelect.addEventListener('change', () => {
+    filterBusesByRoute();
+    syncTripFields(true);
+  });
+  busSelect.addEventListener('change', () => {
+    filterRoutesByBus();
+    filterBusesByRoute();
+    syncTripFields(true);
+  });
+  departureDisplay.addEventListener('input', () => {
+    departureDisplay.setCustomValidity('');
+    syncTripFields(false);
+  });
+  tripForm.addEventListener('submit', (event) => {
+    syncTripFields(false);
+    if (parseDisplayDateTime(departureDisplay.value) == null) {
+      departureDisplay.setCustomValidity('Nhap ngay gio theo dinh dang dd/MM/yy HH:mm');
+      departureDisplay.reportValidity();
+      event.preventDefault();
+    }
+  });
+  filterBusesByRoute();
+  filterRoutesByBus();
+  price.value = normalizeMoneyValue(price.value);
+  syncTripFields(false);
+</script>
+</body>
+</html>

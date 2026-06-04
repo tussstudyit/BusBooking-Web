@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{user/fragments/head :: head('Đăng nhập')}"></head>
+<body class="auth-shell">
+<div th:replace="~{user/fragments/layout :: shell(~{::section})}">
+  <section class="auth-page">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img class="brand-logo" th:src="@{/images/ic_logo.png}" alt="BusBooking">
+        <span>BusBooking</span>
+      </div>
+      <h1>Đăng nhập</h1>
+      <p class="muted">Nhập số điện thoại và mật khẩu để đặt vé, thanh toán và xem mã QR vé.</p>
+      <form th:action="@{/user/login}" method="post" class="stack-form">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <label>
+          <span>Số điện thoại</span>
+          <input type="tel" name="phone" autocomplete="tel" required autofocus>
+        </label>
+        <label>
+          <span>Mật khẩu</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn full" type="submit">Đăng nhập</button>
+      </form>
+      <p class="switch-auth">Chưa có tài khoản? <a th:href="@{/user/register}">Đăng ký ngay</a></p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

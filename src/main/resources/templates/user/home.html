@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{user/fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{user/fragments/layout :: shell(~{::section})}">
+  <section>
+    <div class="hero-band">
+      <div class="hero-slides" aria-hidden="true">
+        <span class="hero-slide"></span>
+        <span class="hero-slide"></span>
+        <span class="hero-slide"></span>
+        <span class="hero-slide"></span>
+        <span class="hero-slide"></span>
+      </div>
+
+      <form class="search-panel hero-search" th:action="@{/user/trips}" method="get">
+        <label>
+          <span>Điểm đi</span>
+          <select name="origin" required>
+            <option value="">Chọn điểm đi</option>
+            <option th:each="origin : ${origins}" th:value="${origin}" th:text="${origin}">Đà Nẵng</option>
+          </select>
+        </label>
+        <label>
+          <span>Điểm đến</span>
+          <select name="destination" required>
+            <option value="">Chọn điểm đến</option>
+            <option th:each="destination : ${destinations}" th:value="${destination}" th:text="${destination}">Hà Nội</option>
+          </select>
+        </label>
+        <label>
+          <span>Ngày đi</span>
+          <input id="homeTripDateIso" type="hidden" name="tripDate" th:value="${searchDate}">
+          <input type="text" inputmode="numeric" placeholder="dd/MM/yy" th:value="${searchDateLabel}" data-date-input="homeTripDateIso" required>
+        </label>
+        <button class="btn" type="submit">Tìm chuyến</button>
+      </form>
+    </div>
+
+    <div class="section-head">
+      <h2>Tuyến xe</h2>
+      <a th:href="@{/user/routes}">Xem tất cả</a>
+    </div>
+    <div class="route-grid">
+      <a class="route-card" th:each="route : ${routeCards}" th:href="@{/user/trips(origin=${route.origin},destination=${route.destination},tripDate=${searchDate})}">
+        <span class="route-photo"></span>
+        <strong><span th:text="${route.origin}">Đà Nẵng</span> ⇄ <span th:text="${route.destination}">Hà Nội</span></strong>
+        <small th:text="${route.distance + ' km'}">700 km</small>
+        <div class="route-options" th:if="${!#lists.isEmpty(route.seatOptions)}">
+          <span class="route-option" th:each="option : ${route.seatOptions}"
+                th:text="${option.seatCount + ' ghế · ' + @userLabels.money(option.suggestedPrice)}">34 ghế · 250.000 đ</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-head">
+      <h2>Chuyến sắp chạy</h2>
+      <a th:href="@{/user/trips}">Xem thêm</a>
+    </div>
+    <div class="trip-list compact">
+      <article class="trip-card" th:each="trip : ${trips}">
+        <div>
+          <strong th:text="${trip.routeLabel()}">Đà Nẵng -> Hà Nội</strong>
+          <p th:text="${trip.licensePlate + ' · ' + trip.totalSeats + ' ghế'}">43A-12345 · 34 ghế</p>
+        </div>
+        <div class="trip-meta">
+          <span th:text="${@userLabels.dateTime(trip.departureTime)}">01/06/26 07:00</span>
+          <strong th:text="${@userLabels.money(trip.price)}">250.000 đ</strong>
+        </div>
+        <a class="btn small" th:href="@{/user/trips/{id}(id=${trip.id})}">Chi tiết</a>
+      </article>
+    </div>
+
+    <div class="section-head" th:if="${webUser != null}">
+      <h2>Vé sắp tới</h2>
+      <a th:href="@{/user/tickets}">Vé của tôi</a>
+    </div>
+    <div class="ticket-strip" th:if="${webUser != null}">
+      <a class="ticket-mini" th:each="ticket : ${upcomingTickets}" th:href="@{/user/tickets/{id}(id=${ticket.id})}">
+        <strong th:text="${ticket.trip.routeLabel()}">Đà Nẵng -> Hà Nội</strong>
+        <span th:text="${'Ghế ' + ticket.seat.seatNumber}">Ghế A01</span>
+      </a>
+      <p class="muted" th:if="${#lists.isEmpty(upcomingTickets)}">Bạn chưa có vé sắp tới.</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

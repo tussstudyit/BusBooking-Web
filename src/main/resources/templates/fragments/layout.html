@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="shell(content)">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">Quản trị BusBooking</div>
+      <nav class="nav">
+        <a th:href="@{/dashboard}">Tổng quan</a>
+        <a th:href="@{/routes}">Tuyến xe</a>
+        <a th:href="@{/buses}">Phương tiện</a>
+        <a th:href="@{/trips}">Chuyến xe</a>
+        <a th:href="@{/users}">Tài khoản</a>
+        <a th:href="@{/tickets}">Vé</a>
+        <a th:href="@{/payments}">Thanh toán</a>
+      </nav>
+      <form class="logout" th:action="@{/logout}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <button type="submit">Đăng xuất</button>
+      </form>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <h1 th:text="${pageTitle ?: 'Quản trị'}">Quản trị</h1>
+      </div>
+      <th:block th:replace="${content}"></th:block>
+    </main>
+  </div>
+</div>
+</body>
+</html>

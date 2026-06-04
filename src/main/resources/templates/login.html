@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng nhập quản trị</title>
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+<main class="login-page">
+  <section class="card login-card">
+    <h1>Quản trị BusBooking</h1>
+    <p class="muted-text">Đăng nhập bằng email quản trị và mật khẩu.</p>
+    <p class="error" th:if="${param.error}">Thông tin đăng nhập không hợp lệ hoặc tài khoản không phải quản trị viên.</p>
+    <p class="error" th:if="${param.forbidden}">Phiên đăng nhập hết hạn hoặc không đủ quyền. Vui lòng đăng nhập lại.</p>
+    <p class="muted-text" th:if="${param.logout}">Đã đăng xuất.</p>
+    <form th:action="@{/login}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div class="field">
+        <label>Email admin</label>
+        <input type="email" name="username" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label>Mật khẩu</label>
+        <input type="password" name="password" required>
+      </div>
+      <button class="btn" type="submit">Đăng nhập</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

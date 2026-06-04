@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: shell(~{::section})}">
+  <section class="card form">
+    <div class="form-heading">
+      <div>
+        <h2 th:text="${mode == 'edit'} ? 'Sửa tuyến xe' : 'Thêm tuyến xe'">Thêm tuyến xe</h2>
+        <p class="muted-text">Mỗi tuyến cần khai báo loại xe 24 hoặc 34 ghế để hệ thống lấy đúng giá vé.</p>
+      </div>
+      <a class="btn muted" th:href="@{/routes}">Quay lại</a>
+    </div>
+
+    <form th:object="${routeForm}" th:action="${mode == 'edit'} ? @{/routes/{id}(id=${documentId})} : @{/routes}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+      <div class="form-two-columns">
+        <div class="field">
+          <label>Điểm đi</label>
+          <select th:field="*{originId}" required>
+            <option value="">Chọn điểm đi</option>
+            <option th:each="province : ${provinces}" th:value="${province.id}" th:text="${province.name}"></option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Điểm đến</label>
+          <select th:field="*{destinationId}" required>
+            <option value="">Chọn điểm đến</option>
+            <option th:each="province : ${provinces}" th:value="${province.id}" th:text="${province.name}"></option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-two-columns">
+        <div class="field">
+          <label>Khoảng cách km</label>
+          <input type="number" min="1" th:field="*{distance}" required>
+        </div>
+        <div class="field">
+          <label>Loại ghế</label>
+          <select th:field="*{seatCount}" required>
+            <option value="34">Xe 34 ghế</option>
+            <option value="24">Xe 24 ghế</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Giá vé gợi ý</label>
+        <input type="number" min="1000" step="1000" th:field="*{suggestedPrice}" required>
+        <p class="field-help">Giá 24 ghế nên cao hơn 34 ghế vì số ghế ít hơn. Khi tạo chuyến, form sẽ tự lấy giá theo loại ghế của tuyến.</p>
+      </div>
+
+      <div class="field">
+        <label><input type="checkbox" th:field="*{isActive}"> Đang hoạt động</label>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn" type="submit">Lưu</button>
+        <a class="btn muted" th:href="@{/routes}">Hủy</a>
+      </div>
+    </form>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{user/fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{user/fragments/layout :: shell(~{::section})}">
+  <section>
+    <div class="detail-layout">
+      <div>
+        <p class="eyebrow">Chi tiết chuyến</p>
+        <h1 th:text="${trip.routeLabel()}">Đà Nẵng -> Hà Nội</h1>
+        <p class="muted" th:text="${trip.busName + ' · ' + trip.licensePlate}">Xe giường nằm · 43A-12345</p>
+      </div>
+      <div class="summary-box">
+        <span>Giá vé</span>
+        <strong th:text="${@userLabels.money(trip.price)}">250.000 đ</strong>
+        <a class="btn full" th:href="@{/user/trips/{id}/seats(id=${trip.id})}">Chọn ghế</a>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div>
+        <span>Khởi hành</span>
+        <strong th:text="${@userLabels.dateTime(trip.departureTime)}">01/06/26 07:00</strong>
+      </div>
+      <div>
+        <span>Dự kiến đến</span>
+        <strong th:text="${@userLabels.dateTime(trip.arrivalTime)}">01/06/26 15:00</strong>
+      </div>
+      <div>
+        <span>Số ghế</span>
+        <strong th:text="${trip.totalSeats + ' ghế'}">34 ghế</strong>
+      </div>
+      <div>
+        <span>Còn trống</span>
+        <strong th:text="${trip.availableSeats + ' ghế'}">34 ghế</strong>
+      </div>
+      <div>
+        <span>Khoảng cách</span>
+        <strong th:text="${trip.distance + ' km'}">700 km</strong>
+      </div>
+      <div>
+        <span>Trạng thái</span>
+        <strong th:text="${@userLabels.status(trip.status)}">Chưa khởi hành</strong>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

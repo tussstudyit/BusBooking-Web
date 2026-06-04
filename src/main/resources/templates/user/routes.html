@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{user/fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{user/fragments/layout :: shell(~{::section})}">
+  <section>
+    <div class="page-head">
+      <p class="eyebrow">Tuyến xe</p>
+      <h1>Các tuyến đang khai thác</h1>
+    </div>
+    <div class="route-grid wide">
+      <a class="route-card" th:each="route : ${routeCards}" th:href="@{/user/trips(origin=${route.origin},destination=${route.destination})}">
+        <span class="route-photo"></span>
+        <strong><span th:text="${route.origin}">Đà Nẵng</span> ⇄ <span th:text="${route.destination}">Hà Nội</span></strong>
+        <small>
+          <span th:text="${route.distance + ' km'}">700 km</span>
+          <span th:if="${route.tripCount > 0}" th:text="${' · ' + route.tripCount + ' chuyến sắp chạy'}"> · 3 chuyến</span>
+        </small>
+        <div class="route-options" th:if="${!#lists.isEmpty(route.seatOptions)}">
+          <span class="route-option" th:each="option : ${route.seatOptions}"
+                th:text="${option.seatCount + ' ghế · ' + @userLabels.money(option.suggestedPrice)}">34 ghế · 250.000 đ</span>
+        </div>
+      </a>
+    </div>
+  </section>
+</div>
+</body>
+</html>

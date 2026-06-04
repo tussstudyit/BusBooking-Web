@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="shell(content)">
+  <header class="user-topbar">
+    <a class="user-brand" th:href="@{/user/home}">
+      <img class="brand-logo" th:src="@{/images/ic_logo.png}" alt="BusBooking">
+      <span>BusBooking</span>
+    </a>
+
+    <nav class="main-nav">
+      <a th:href="@{/user/home}">Trang chủ</a>
+      <a th:href="@{/user/routes}">Tuyến xe</a>
+      <a th:href="@{/user/trips}">Chuyến xe</a>
+      <a th:href="@{/user/tickets}" th:if="${webUser != null}">Vé của tôi</a>
+    </nav>
+
+    <nav class="top-actions">
+      <a class="login-link" th:href="@{/user/login}" th:if="${webUser == null}" aria-label="Đăng nhập">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+          <path d="M10 17l5-5-5-5"></path>
+          <path d="M15 12H3"></path>
+        </svg>
+        <span>Đăng nhập</span>
+      </a>
+      <a class="primary-link register-link" th:href="@{/user/register}" th:if="${webUser == null}" aria-label="Đăng ký">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M19 8v6"></path>
+          <path d="M22 11h-6"></path>
+        </svg>
+        <span>Đăng ký</span>
+      </a>
+      <a class="hello account-link" th:if="${webUser != null}" th:href="@{/user/profile}">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 21a8 8 0 0 0-16 0"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span th:text="${webUser.name}">Người dùng</span>
+      </a>
+      <form th:if="${webUser != null}" th:action="@{/user/logout}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <button class="logout-button" type="submit" aria-label="Thoát">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <path d="M16 17l5-5-5-5"></path>
+            <path d="M21 12H9"></path>
+          </svg>
+          <span>Thoát</span>
+        </button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="user-main">
+    <p class="alert error" th:if="${error}" th:text="${error}">Lỗi</p>
+    <p class="alert success" th:if="${success}" th:text="${success}">Thành công</p>
+    <th:block th:replace="${content}"></th:block>
+  </main>
+
+  <nav class="bottom-nav">
+    <a th:href="@{/user/home}"><span>⌂</span>Trang chủ</a>
+    <a th:href="@{/user/tickets}"><span>▣</span>Vé của tôi</a>
+    <a th:href="@{/user/routes}"><span>◇</span>Tuyến xe</a>
+    <a th:href="@{/user/profile}"><span>●</span>Cá nhân</a>
+  </nav>
+</div>
+</body>
+</html>

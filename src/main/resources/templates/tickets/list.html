@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: shell(~{::section})}">
+  <section>
+    <p class="error" th:if="${loadError}" th:text="${loadError}">Không tải được dữ liệu vé</p>
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Mã</th><th>Người dùng</th><th>Chuyến</th><th>Ghế</th><th>Trạng thái</th><th>Hoàn tiền</th><th>Thời gian đặt</th></tr></thead>
+        <tbody>
+        <tr th:each="ticket : ${tickets}">
+          <td th:text="${ticket.id ?: ticket.documentId}">id</td>
+          <td th:text="${ticket.userId}">user</td>
+          <td th:text="${ticket.tripId}">trip</td>
+          <td th:text="${ticket.seatId}">seat</td>
+          <td th:text="${@statusLabels.label(ticket.status)}">Trạng thái</td>
+          <td th:text="${@statusLabels.label(ticket.refundStatus)}">Không có</td>
+          <td th:text="${ticket.bookingTime}">0</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+</body>
+</html>
+

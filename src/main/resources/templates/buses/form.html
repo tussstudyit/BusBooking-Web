@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: shell(~{::section})}">
+  <section class="card form">
+    <form th:object="${busForm}" th:action="${mode == 'edit'} ? @{/buses/{id}(id=${documentId})} : @{/buses}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div class="field"><label>Tên xe</label><input th:field="*{busName}" required></div>
+      <div class="field"><label>Biển số</label><input th:field="*{licensePlate}" required></div>
+      <div class="field">
+        <label>Tổng số ghế</label>
+        <select th:field="*{totalSeats}" required>
+          <option value="34">34 ghế</option>
+          <option value="24">24 ghế</option>
+        </select>
+      </div>
+      <div class="field"><label><input type="checkbox" th:field="*{isActive}"> Đang hoạt động</label></div>
+      <button class="btn" type="submit">Lưu</button>
+      <a class="btn muted" th:href="@{/buses}">Hủy</a>
+    </form>
+  </section>
+</div>
+</body>
+</html>

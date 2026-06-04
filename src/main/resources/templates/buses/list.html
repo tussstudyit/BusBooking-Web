@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: shell(~{::section})}">
+  <section>
+    <p><a class="btn" th:href="@{/buses/new}">Thêm xe</a></p>
+    <p class="error" th:if="${loadError}" th:text="${loadError}">Không tải được dữ liệu xe</p>
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Mã</th><th>Tên xe</th><th>Biển số</th><th>Số ghế</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <tbody>
+        <tr th:each="bus : ${buses}">
+          <td th:text="${bus.id}">1</td>
+          <td th:text="${bus.busName}">Xe</td>
+          <td th:text="${bus.licensePlate}">Plate</td>
+          <td th:text="${bus.totalSeats}">0</td>
+          <td th:text="${@statusLabels.active(bus.isActive)}">Đang hoạt động</td>
+          <td class="actions">
+            <span class="muted-text" th:if="${demoMode}">Dữ liệu mẫu</span>
+            <a class="btn muted" th:unless="${demoMode}" th:href="@{/buses/{id}/edit(id=${bus.documentId})}">Sửa</a>
+            <a class="btn secondary" th:unless="${demoMode}" th:href="@{/buses/{id}/seats(id=${bus.documentId})}">Ghế</a>
+            <form th:if="${!demoMode and bus.isActive}" th:action="@{/buses/{id}/active/false(id=${bus.documentId})}" method="post">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <button class="btn warning" type="submit">Ngừng hoạt động</button>
+            </form>
+            <form th:if="${!demoMode and !bus.isActive}" th:action="@{/buses/{id}/active/true(id=${bus.documentId})}" method="post">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <button class="btn secondary" type="submit">Kích hoạt</button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: shell(~{::section})}">
+  <section>
+    <div class="stats">
+      <div class="card stat"><span>Tài khoản</span><strong th:text="${stats.users}">0</strong></div>
+      <div class="card stat"><span>Tuyến đang hoạt động</span><strong th:text="${stats.activeRoutes}">0</strong></div>
+      <div class="card stat"><span>Xe đang hoạt động</span><strong th:text="${stats.activeBuses}">0</strong></div>
+      <div class="card stat"><span>Chuyến chưa khởi hành</span><strong th:text="${stats.scheduledTrips}">0</strong></div>
+      <div class="card stat"><span>Vé</span><strong th:text="${stats.tickets}">0</strong></div>
+      <div class="card stat"><span>Thanh toán thành công</span><strong th:text="${stats.successfulPayments}">0</strong></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

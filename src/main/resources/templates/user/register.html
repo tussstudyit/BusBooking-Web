@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{user/fragments/head :: head('Đăng ký')}"></head>
+<body class="auth-shell">
+<div th:replace="~{user/fragments/layout :: shell(~{::section})}">
+  <section class="auth-page">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img class="brand-logo" th:src="@{/images/ic_logo.png}" alt="BusBooking">
+        <span>BusBooking</span>
+      </div>
+      <h1>Tạo tài khoản</h1>
+      <p class="muted">Tạo tài khoản để đặt vé, quản lý chuyến đi và xem mã QR vé sau thanh toán.</p>
+      <form th:action="@{/user/register}" method="post" class="stack-form">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <label>
+          <span>Họ tên</span>
+          <input type="text" name="name" autocomplete="name" required>
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <label>
+          <span>Số điện thoại</span>
+          <input type="tel" name="phone" autocomplete="tel" required>
+        </label>
+        <label>
+          <span>Mật khẩu</span>
+          <input type="password" name="password" minlength="6" autocomplete="new-password" required>
+        </label>
+        <button class="btn full" type="submit">Đăng ký</button>
+      </form>
+      <p class="switch-auth">Đã có tài khoản? <a th:href="@{/user/login}">Đăng nhập</a></p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

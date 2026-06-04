@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{user/fragments/head :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{user/fragments/layout :: shell(~{::section})}">
+  <section>
+    <div class="page-head">
+      <p class="eyebrow">Vé của tôi</p>
+      <h1>Danh sách vé</h1>
+    </div>
+    <div class="ticket-list">
+      <a class="ticket-row" th:each="ticket : ${tickets}" th:href="@{/user/tickets/{id}(id=${ticket.id})}">
+        <div>
+          <strong th:text="${ticket.trip.routeLabel()}">Đà Nẵng -> Hà Nội</strong>
+          <span>
+            <span th:text="${'Ghế ' + ticket.seat.seatNumber}">Ghế A01</span>
+            <span th:text="${' · ' + @userLabels.dateTime(ticket.trip.departureTime)}"> · 01/06/26 07:00</span>
+            <span th:text="${' · ' + ticket.trip.licensePlate}"> · 43A-12345</span>
+          </span>
+        </div>
+        <em th:text="${@userLabels.status(ticket.status)}">Đã thanh toán</em>
+      </a>
+      <p class="empty" th:if="${#lists.isEmpty(tickets)}">Bạn chưa có vé nào.</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>
