@@ -4,10 +4,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -86,12 +84,11 @@ public class RollingTripGeneratorService {
     @Transactional
     public synchronized Map<String, Object> generateUpcomingTrips() {
         long today = LocalDate.now(VN_ZONE).atStartOfDay(VN_ZONE).toInstant().toEpochMilli();
-        long windowEnd = today + ROLLING_DAYS * DAY_MS;
         long now = System.currentTimeMillis();
         Long defaultCompanyId = findDefaultCompanyId();
         int insertedTrips = 0;
         int autoAssignedStaff = 0;
-        List<Long> visibleTripIds = new ArrayList<>();
+        int existingTrips = 0;
 
         for (TripTemplate template : TRIP_TEMPLATES) {
             TemplateContext context = findTemplateContext(template, defaultCompanyId);
@@ -105,64 +102,25 @@ public class RollingTripGeneratorService {
                 TripRef trip = findTrip(context.routeId(), context.busId(), departureTime);
                 if (trip == null) {
                     Long tripId = insertTrip(context, tripDate, departureTime, arrivalTime, now);
-                    visibleTripIds.add(tripId);
                     insertedTrips++;
                     autoAssignedStaff += assignStaffIfNeverAssigned(tripId, context, departureTime, arrivalTime, now);
-                } else if (isRefreshableTrip(trip.status())) {
-                    visibleTripIds.add(trip.id());
-                    autoAssignedStaff += assignStaffIfNeverAssigned(trip.id(), context, departureTime, arrivalTime, now);
+                } else {
+                    // Existing trips belong to the management workflow. Never update their
+                    // status, price, schedule or staff assignment during rolling generation.
+                    existingTrips++;
                 }
             }
         }
 
-        int cancelledStaleTrips = cancelStaleTrips(today, windowEnd, visibleTripIds, now);
         lastRefreshAt = now;
         return Map.of(
                 "code", "00",
-                "message", "Rolling trips refreshed",
+                "message", "Missing rolling trips generated",
                 "days", ROLLING_DAYS,
                 "inserted", insertedTrips,
                 "autoAssignedStaff", autoAssignedStaff,
-                "cancelledStaleTrips", cancelledStaleTrips
+                "existing", existingTrips
         );
-    }
-
-    private int cancelStaleTrips(long windowStart, long windowEnd, List<Long> visibleTripIds, long now) {
-        if (visibleTripIds.isEmpty()) {
-            return 0;
-        }
-        String placeholders = visibleTripIds.stream().map(id -> "?").collect(Collectors.joining(", "));
-        List<Object> args = new ArrayList<>();
-        args.add(now);
-        args.add(windowStart);
-        args.add(windowEnd);
-        args.addAll(visibleTripIds);
-        int cancelled = jdbcTemplate.update("""
-                UPDATE trips t
-                LEFT JOIN tickets tk ON tk.trip_id=t.id
-                LEFT JOIN payments p ON p.trip_id=t.id
-                SET t.status='CANCELLED',
-                    t.updated_at=?
-                WHERE t.departure_time>=?
-                  AND t.departure_time<?
-                  AND t.status <> 'CANCELLED'
-                  AND t.id NOT IN (%s)
-                  AND tk.id IS NULL
-                  AND p.id IS NULL
-                """.formatted(placeholders), args.toArray());
-        if (cancelled > 0) {
-            jdbcTemplate.update("""
-                    UPDATE trip_staff_assignments tsa
-                    JOIN trips t ON t.id=tsa.trip_id
-                    SET tsa.status='INACTIVE',
-                        tsa.updated_at=?
-                    WHERE t.departure_time>=?
-                      AND t.departure_time<?
-                      AND t.status='CANCELLED'
-                      AND tsa.status='ACTIVE'
-                    """, now, windowStart, windowEnd);
-        }
-        return cancelled;
     }
 
     private TemplateContext findTemplateContext(TripTemplate template, Long defaultCompanyId) {
@@ -289,10 +247,6 @@ public class RollingTripGeneratorService {
         }
         values = jdbcTemplate.query("SELECT id FROM bus_companies ORDER BY id LIMIT 1", (rs, rowNum) -> rs.getLong(1));
         return values.isEmpty() ? null : values.get(0);
-    }
-
-    private boolean isRefreshableTrip(String status) {
-        return !("CANCELLED".equalsIgnoreCase(status) || "COMPLETED".equalsIgnoreCase(status));
     }
 
     private Long nullableLong(ResultSet rs, String column) throws SQLException {

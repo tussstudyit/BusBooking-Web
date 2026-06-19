@@ -5,12 +5,12 @@
 <div th:replace="~{fragments/layout :: shell(~{::section})}">
   <section>
     <div class="trip-page-actions">
-      <a class="btn" th:href="@{/trips/new}">Them chuyen</a>
+      <a class="btn" th:href="@{/trips/new}">Thêm chuyến</a>
     </div>
 
     <div class="trip-day-toolbar">
-      <a class="btn muted" th:if="${previousDate != null}" th:href="@{/trips(date=${previousDate})}">Ngay truoc</a>
-      <span class="btn muted disabled" th:if="${previousDate == null}">Ngay truoc</span>
+      <a class="btn muted" th:if="${previousDate != null}" th:href="@{/trips(date=${previousDate})}">Ngày trước</a>
+      <span class="btn muted disabled" th:if="${previousDate == null}">Ngày trước</span>
 
       <div class="trip-day-tabs" aria-label="Ngay chuyen">
         <a th:each="day : ${dateOptions}"
@@ -20,44 +20,44 @@
            th:text="${day.label}">01/06</a>
       </div>
 
-      <a class="btn muted" th:if="${nextDate != null}" th:href="@{/trips(date=${nextDate})}">Ngay sau</a>
-      <span class="btn muted disabled" th:if="${nextDate == null}">Ngay sau</span>
+      <a class="btn muted" th:if="${nextDate != null}" th:href="@{/trips(date=${nextDate})}">Ngày sau</a>
+      <span class="btn muted disabled" th:if="${nextDate == null}">Ngày sau</span>
     </div>
 
-    <p class="error" th:if="${loadError}" th:text="${loadError}">Khong tai duoc du lieu chuyen</p>
+    <p class="error" th:if="${loadError}" th:text="${loadError}">Không tải được dữ liệu chuyến</p>
     <p class="muted-text" th:unless="${loadError}" th:text="'Dang hien thi chuyen ngay ' + ${selectedDateLabel} + '. Chuyen cu truoc hom nay khong hien thi tren admin.'">
-      Dang hien thi chuyen theo ngay.
+      Đang hiển thị chuyến theo ngày.
     </p>
 
     <div class="table-card">
       <table>
         <thead>
         <tr>
-          <th>Ma</th><th>Tuyen</th><th>Xe</th><th>Nhan vien</th><th>Ngay</th><th>Gio di</th><th>Gia</th><th>Ghe</th><th>Trang thai</th><th>Thao tac</th>
+          <th>Mã</th><th>Tuyến</th><th>Xe</th><th>Nhân viên</th><th>Ngày</th><th>Giờ đi</th><th>Giá</th><th>Ghế</th><th>Trạng thái</th><th>Thao tác</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="trip : ${trips}">
           <td th:text="${trip.id}">1</td>
-          <td th:text="${trip.routeLabel}">Tuyen</td>
+          <td th:text="${trip.routeLabel}">Tuyến</td>
           <td th:text="${trip.busLicensePlate}">43A-12345</td>
-          <td th:text="${trip.staffName == null || #strings.isEmpty(trip.staffName) ? 'Chua gan' : trip.staffName}">Nhan vien</td>
+          <td th:text="${trip.staffName == null || #strings.isEmpty(trip.staffName) ? 'Chua gan' : trip.staffName}">Nhân viên</td>
           <td th:text="${@timeLabels.date(trip.tripDate)}">01/06/26</td>
           <td th:text="${@timeLabels.dateTime(trip.departureTime)}">01/06/26 07:00</td>
           <td th:text="${@timeLabels.money(trip.price)}">0 d</td>
           <td th:text="${trip.availableSeats + '/' + trip.totalSeats}">0/0</td>
-          <td th:text="${@statusLabels.label(trip.bookingStatus)}">Chua khoi hanh</td>
+          <td th:text="${@statusLabels.label(trip.bookingStatus)}">Chưa khởi hành</td>
           <td class="actions">
-            <span class="muted-text" th:if="${demoMode}">Du lieu mau</span>
-            <a class="btn muted" th:unless="${demoMode}" th:href="@{/trips/{id}/edit(id=${trip.documentId})}">Sua</a>
+            <span class="muted-text" th:if="${demoMode}">Dữ liệu mẫu</span>
+            <a class="btn muted" th:unless="${demoMode}" th:href="@{/trips/{id}/edit(id=${trip.documentId})}">Sửa</a>
             <form th:if="${!demoMode and trip.status != 'CANCELLED'}" th:action="@{/trips/{id}/cancel(id=${trip.documentId})}" method="post">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-              <button class="btn warning" type="submit">Huy chuyen</button>
+              <button class="btn warning" type="submit">Huỷ chuyến</button>
             </form>
           </td>
         </tr>
         <tr th:if="${#lists.isEmpty(trips)}">
-          <td colspan="10" class="muted-text">Khong co chuyen trong ngay nay</td>
+          <td colspan="10" class="muted-text">Không có chuyến trong ngày này</td>
         </tr>
         </tbody>
       </table>

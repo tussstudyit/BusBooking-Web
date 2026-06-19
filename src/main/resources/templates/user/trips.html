@@ -9,29 +9,58 @@
       <h1>Danh sách chuyến</h1>
     </div>
 
-    <form class="search-panel slim" th:action="@{/user/trips}" method="get">
-      <label>
-        <span>Điểm đi</span>
-        <select name="origin">
-          <option value="">Tất cả</option>
-          <option th:each="item : ${origins}" th:value="${item}" th:text="${item}" th:selected="${item == origin}">Đà Nẵng</option>
-        </select>
-      </label>
-      <label>
-        <span>Điểm đến</span>
-        <select name="destination">
-          <option value="">Tất cả</option>
-          <option th:each="item : ${destinations}" th:value="${item}" th:text="${item}" th:selected="${item == destination}">Hà Nội</option>
-        </select>
-      </label>
+    <form class="search-panel slim" th:classappend="${roundTrip} ? ' is-round-trip' : ' is-one-way'" th:action="@{/user/trips}" method="get" data-trip-search>
+      <div class="route-fields">
+        <label>
+          <span>Điểm đi</span>
+          <select name="origin">
+            <option value="">Tất cả</option>
+            <option th:each="item : ${origins}" th:value="${item}" th:text="${item}" th:selected="${item == origin}">Đà Nẵng</option>
+          </select>
+        </label>
+        <button class="swap-route" type="button" data-swap-route aria-label="Đảo điểm đi và điểm đến" title="Đảo điểm đi và điểm đến">
+          <svg class="swap-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M17 2l4 4-4 4"></path>
+            <path d="M3 11V9a3 3 0 0 1 3-3h15"></path>
+            <path d="M7 22l-4-4 4-4"></path>
+            <path d="M21 13v2a3 3 0 0 1-3 3H3"></path>
+          </svg>
+        </button>
+        <label>
+          <span>Điểm đến</span>
+          <select name="destination">
+            <option value="">Tất cả</option>
+            <option th:each="item : ${destinations}" th:value="${item}" th:text="${item}" th:selected="${item == destination}">Hà Nội</option>
+          </select>
+        </label>
+      </div>
       <label>
         <span>Ngày đi</span>
         <input id="tripDateIso" type="hidden" name="tripDate" th:value="${tripDate}">
         <input type="text" inputmode="numeric" placeholder="dd/MM/yy" th:value="${tripDateLabel}" data-date-input="tripDateIso">
       </label>
+      <label data-return-date th:hidden="${!roundTrip}">
+        <span>Ngày về</span>
+        <input id="returnDateIso" type="hidden" name="returnDate" th:value="${returnDate}" th:disabled="${!roundTrip}">
+        <input type="text" inputmode="numeric" placeholder="dd/MM/yy" th:value="${returnDateLabel}" data-date-input="returnDateIso" data-required-when-round="true" th:disabled="${!roundTrip}">
+      </label>
+      <div class="trip-type-toggle">
+        <label>
+          <input type="radio" name="tripType" value="oneWay" th:checked="${!roundTrip}">
+          <span>Một chiều</span>
+        </label>
+        <label>
+          <input type="radio" name="tripType" value="roundTrip" th:checked="${roundTrip}">
+          <span>Khứ hồi</span>
+        </label>
+      </div>
       <button class="btn" type="submit">Lọc</button>
     </form>
 
+    <div class="section-head trip-section-head" th:if="${roundTrip and hasRoute}">
+      <h2>Chiều đi</h2>
+      <span th:text="${origin + ' -> ' + destination}">Đà Nẵng -> Hội An</span>
+    </div>
     <div class="trip-list">
       <article class="trip-card" th:each="trip : ${trips}">
         <div class="trip-route">
@@ -56,6 +85,36 @@
         <a class="btn small" th:href="@{/user/trips/{id}(id=${trip.id})}">Chi tiết</a>
       </article>
       <p class="empty" th:if="${#lists.isEmpty(trips)}">Không có chuyến phù hợp.</p>
+    </div>
+
+    <div class="section-head trip-section-head" th:if="${roundTrip and hasRoute}">
+      <h2>Chiều về</h2>
+      <span th:text="${destination + ' -> ' + origin}">Hội An -> Đà Nẵng</span>
+    </div>
+    <div class="trip-list" th:if="${roundTrip and hasRoute}">
+      <article class="trip-card" th:each="trip : ${returnTrips}">
+        <div class="trip-route">
+          <strong th:text="${trip.routeLabel()}">Hà Nội -> Đà Nẵng</strong>
+          <p>
+            <span th:text="${trip.busName}">Xe giường nằm</span>
+            <span th:text="${' · ' + trip.licensePlate}"> · 43A-12345</span>
+          </p>
+        </div>
+        <div class="trip-meta">
+          <span>Khởi hành</span>
+          <strong th:text="${@userLabels.dateTime(trip.departureTime)}">01/06/26 07:00</strong>
+        </div>
+        <div class="trip-meta">
+          <span>Ghế trống</span>
+          <strong th:text="${trip.availableSeats + '/' + trip.totalSeats}">34/34</strong>
+        </div>
+        <div class="trip-meta">
+          <span>Giá vé</span>
+          <strong th:text="${@userLabels.money(trip.price)}">250.000 đ</strong>
+        </div>
+        <a class="btn small" th:href="@{/user/trips/{id}(id=${trip.id})}">Chi tiết</a>
+      </article>
+      <p class="empty" th:if="${#lists.isEmpty(returnTrips)}">Không có chuyến chiều về phù hợp.</p>
     </div>
   </section>
 </div>

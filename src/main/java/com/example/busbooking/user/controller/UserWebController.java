@@ -35,6 +35,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class UserWebController {
     private static final String WEB_USER_ID = "WEB_USER_ID";
     private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("dd/MM/yy");
+    private static final String ROUND_TRIP = "roundTrip";
 
     private final UserAuthService userAuthService;
     private final UserWebService userWebService;
@@ -121,11 +122,14 @@ public class UserWebController {
     @GetMapping("/home")
     public String home(Model model, HttpSession session) {
         LocalDate searchDate = userWebService.defaultSearchDate();
+        LocalDate returnDate = searchDate.plusDays(1);
         model.addAttribute("pageTitle", "Trang chu");
         model.addAttribute("origins", userWebService.origins());
         model.addAttribute("destinations", userWebService.destinations());
         model.addAttribute("searchDate", searchDate);
         model.addAttribute("searchDateLabel", displayDate(searchDate));
+        model.addAttribute("returnDate", returnDate);
+        model.addAttribute("returnDateLabel", displayDate(returnDate));
         model.addAttribute("routeCards", userWebService.routeCards().stream().limit(4).toList());
         model.addAttribute("trips", userWebService.upcomingTrips(6));
         UserSession user = currentUser(session);
@@ -145,13 +149,21 @@ public class UserWebController {
             @RequestParam(required = false) String origin,
             @RequestParam(required = false) String destination,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tripDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate returnDate,
+            @RequestParam(required = false) String tripType,
             @RequestParam(required = false) Integer totalSeats,
             Model model
     ) {
         LocalDate date = tripDate == null ? userWebService.defaultSearchDate() : tripDate;
+        boolean hasRoute = StringUtils.hasText(origin) && StringUtils.hasText(destination);
+        boolean roundTrip = ROUND_TRIP.equalsIgnoreCase(tripType);
+        LocalDate selectedReturnDate = returnDate == null ? date.plusDays(1) : returnDate;
         List<TripView> trips = StringUtils.hasText(origin) && StringUtils.hasText(destination)
                 ? userWebService.searchTrips(origin, destination, date, totalSeats)
                 : userWebService.upcomingTrips(30);
+        List<TripView> returnTrips = roundTrip && hasRoute
+                ? userWebService.searchTrips(destination, origin, selectedReturnDate, totalSeats)
+                : List.of();
         model.addAttribute("pageTitle", "Chuyen xe");
         model.addAttribute("origins", userWebService.origins());
         model.addAttribute("destinations", userWebService.destinations());
@@ -159,6 +171,12 @@ public class UserWebController {
         model.addAttribute("destination", destination);
         model.addAttribute("tripDate", date);
         model.addAttribute("tripDateLabel", displayDate(date));
+        model.addAttribute("returnDate", selectedReturnDate);
+        model.addAttribute("returnDateLabel", displayDate(selectedReturnDate));
+        model.addAttribute("tripType", roundTrip ? ROUND_TRIP : "oneWay");
+        model.addAttribute("roundTrip", roundTrip);
+        model.addAttribute("hasRoute", hasRoute);
+        model.addAttribute("returnTrips", returnTrips);
         model.addAttribute("totalSeats", totalSeats);
         model.addAttribute("trips", trips);
         return "user/trips";
